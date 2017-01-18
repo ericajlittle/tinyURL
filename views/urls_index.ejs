@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>TinyApp</title>
+</head>
+  <header>
+        <% include ../partials/_header %>
+    </header>
+<body>
+
+<!-- add your ejs code here -->
+<ul>
+<% for (let shortURL in urls) { %>
+  <li><%= shortURL %> - <%= urls[shortURL] %></li>
+<% } %>
+  <li>Create New</li>
+</ul>
+
+</body>
+</html>
