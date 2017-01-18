@@ -1,18 +1,18 @@
-var express = require("express");
-var app = express();
-var PORT = process.env.PORT || 8080;
+const express = require("express");
+const app = express();
+const PORT = process.env.PORT || 8080;
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
 
-var urlDatabase = {
+const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 function generateRandomString() {
-  let random = Math.random().toString(36).substring(0, 6);
+  const random = Math.random().toString(36).substring(0, 6);
   return random;
 }
 
@@ -25,13 +25,26 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let longURL = req.body["longURL"];
-  let shortURL = generateRandomString();
+  const longURL = req.body["longURL"];
+  const shortURL = generateRandomString();
   console.log(longURL);
   console.log(shortURL);
   urlDatabase[shortURL] = longURL;
   console.log(urlDatabase);
-  res.redirect(302, "http://localhost:8080/urls/"+shortURL);
+  res.redirect(302, "/urls/"+shortURL);
+});
+
+app.post("/urls/:shortUrl/delete", (req, res) => {
+  const shortUrl = req.params.shortUrl;
+  delete urlDatabase[shortUrl];
+  res.redirect('/urls');
+});
+
+app.post("/urls/:shortURL/edit", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/urls.json", (req, res) => {
@@ -39,7 +52,8 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/hello", (req, res) => {
-  res.end("<html><body>Hello <b>World</b></body></html>\n");
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+  res.end();
 });
 
 app.get("/urls", (req, res) => {
@@ -47,8 +61,8 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-app.get("/urls/:id", (req, res) => {
-  let templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id] };
+app.get("/urls/:shortUrl", (req, res) => {
+  let templateVars = { shortURL: req.params.shortUrl, longURL: urlDatabase[req.params.shortUrl] };
   res.render("urls_show", templateVars);
 });
 
