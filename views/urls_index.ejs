@@ -7,18 +7,25 @@
   <header>
     <% include ./partials/_header %>
   </header>
-  <ul>
+<table>
+  <tr>
     <% for (let shortURL in urls) { %>
-    <li>
-      <form method="POST" action="/urls/<%= shortURL %>/delete">
-        <a href="/urls/<%= shortURL %>"><%= shortURL %></a> - <%= urls[shortURL] %>
-        <button type="submit">Delete</button>
+
+    <form method="POST" action="/urls/<%= shortURL %>/delete">
+
+        <td> <a href="/urls/<%= shortURL %>"><%= shortURL %></a>  -->  </td>
+        <td> <%= urls[shortURL] %></td>
+        <td> <button>
+        <a href="/urls/<%= shortURL %>" >Edit</a>
+        </button> </td>
+        <td> <button type="submit">Delete</button> </td>
       </form>
-    </li>
     <% } %>
-    <li>
-      <a href="/urls/new">Create New</a>
-    </li>
-  </ul>
+  </tr>
+</table>
+<table>
+  <tr> <a href="/urls/new">Create New</a> </tr>
+</table>
+
 </body>
 </html>
