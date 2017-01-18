@@ -3,12 +3,10 @@
 <head>
   <title>TinyApp</title>
 </head>
-  <header>
-        <% include ../partials/_header %>
-    </header>
 <body>
-
-<!-- add your ejs code here -->
+ <header>
+        <% include ./partials/_header %>
+    </header>
 <ul>
 <% for (let shortURL in urls) { %>
   <li><%= shortURL %> - <%= urls[shortURL] %></li>
