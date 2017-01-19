@@ -8,16 +8,21 @@
     <% include ./partials/_header %>
   </header>
 <table>
-  <tr>
+
     <% for (let shortURL in urls) { %>
 
     <form method="POST" action="/urls/<%= shortURL %>/delete">
-
+        <tr>
         <td> <a href="/urls/<%= shortURL %>"><%= shortURL %></a>  -->  </td>
+
         <td> <%= urls[shortURL] %></td>
+
+
         <td> <button>
         <a href="/urls/<%= shortURL %>" >Edit</a>
         </button> </td>
+
+
         <td> <button type="submit">Delete</button> </td>
       </form>
     <% } %>
