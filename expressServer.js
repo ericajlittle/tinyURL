@@ -49,6 +49,7 @@ app.post("/urls/logout", (req, res) => {
 // Login
 app.post("/urls/login", (req, res) => {
   let username = req.body.username;
+  let password = req.body.password;
   res.cookie("username", username);
   res.redirect('/urls');
 });

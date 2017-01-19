@@ -7,9 +7,13 @@
   <% if (username == undefined) { %>
 
 <form method="POST" action="/urls/login">
-    <input id="login" type="text" name="username" placeholder="Please sign in"  style="width: 300px">
+    <input id="login" type="text" name="username" placeholder="Username"  style="width: 300px">
+    <input id="login" type="text" name="password" placeholder="Password"  style="width: 300px">
 
     <button type="Submit">Sign in</button>
+
+
+
 </form>
 
 <% } else { %>
