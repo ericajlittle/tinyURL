@@ -4,23 +4,24 @@
 <header>
   <h1>Tiny App</h1>
 
-  <% if (username == undefined) { %>
+<p><% if (current_user == undefined) { %>
 
-<form method="POST" action="/urls/login">
-    <input id="login" type="text" name="username" placeholder="Username"  style="width: 300px">
+<form method="POST" action="/login">
+    <input id="login" type="text" name="email" placeholder="email"  style="width: 300px">
     <input id="login" type="text" name="password" placeholder="Password"  style="width: 300px">
 
     <button type="Submit">Sign in</button>
+</form></p>
 
-
-
-</form>
+<p>
+<a href="/register">Register</a>
+</p>
 
 <% } else { %>
-<%= username %>
-<form method="POST" action="/urls/logout">
+<%= current_user.email %>
+<p><form method="POST" action="/logout">
     <button type="Submit">Sign out</button>
 
-<% } %>
+<% } %></form></p>
 
 </header>

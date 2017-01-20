@@ -3,11 +3,32 @@ const cookieParser = require('cookie-parser')
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
+app.use(function(req, res, next){
+
+  let user = usersDatabase[req.cookies.user_id];
+
+  // user is either going to be a user object, or undefined
+
+  res.locals.current_user = user;
+  next();
+});
 
 app.set("view engine", "ejs");
+
+const usersDatabase = {
+
+  // "fhuweife": {
+  //   email: "someone@example.com",
+  //   password: "supersecret",
+  //   id: "fhuweife"
+
+  // }
+
+};
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -19,7 +40,7 @@ function generateRandomString() {
 }
 
 app.get("/", (req, res) => {
-  res.end("Hello!");
+  res.redirect("/urls");
 });
 
 app.get("/urls/new", (req, res) => {
@@ -38,20 +59,62 @@ app.post("/urls", (req, res) => {
   res.redirect(302, "/urls/"+shortURL);
 });
 
-//
-app.post("/urls/logout", (req, res) => {
-  let username = req.body.username;
-  res.clearCookie('username');
-
+// Logout user
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
-// Login
-app.post("/urls/login", (req, res) => {
-  let username = req.body.username;
+
+function authenticate(email, password) {
+  for (let user_id in usersDatabase) {
+    let user = usersDatabase[user_id];
+
+    if (email === user.email) {
+      if (password === user.password) {
+        return user_id;
+      } else {
+        // found email but password didn't match
+        return null;
+      }
+    }
+  }
+  // didn't find user for that email
+  return null;
+}
+
+// Login user
+app.post("/login", (req, res) => {
+  let email = req.body.email;
   let password = req.body.password;
-  res.cookie("username", username);
-  res.redirect('/urls');
+
+  let user_id = authenticate(email, password);
+
+  if (user_id) {
+    res.cookie("user_id", user_id);
+    res.redirect("/");
+  }
+  else {
+    res.send(403, "<html><body>Wrong email or password</body></html>\n");
+    res.end();
+  }
+});
+
+
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+// Register user
+app.post("/register", (req, res) => {
+  const id = generateRandomString()
+  usersDatabase[id] = {
+    email: req.body.email,
+    password: req.body.password,
+    id: id
+  }
+  res.cookie("user_id", id);
+  res.redirect("/");
+
 });
 
 app.post("/urls/:shortUrl/delete", (req, res) => {
@@ -78,12 +141,12 @@ app.get("/hello", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
-  let templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  let templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:shortUrl", (req, res) => {
-  let templateVars = { username: req.cookies["username"], shortURL: req.params.shortUrl, longURL: urlDatabase[req.params.shortUrl] };
+  let templateVars = { shortURL: req.params.shortUrl, longURL: urlDatabase[req.params.shortUrl] };
   res.render("urls_show", templateVars);
 });
 
