@@ -7,28 +7,56 @@
   <header>
     <% include ./partials/_header %>
   </header>
-<table>
 
-    <% for (let shortURL in urls) { %>
+<!-- logged in checking condition -->
+<table border="1" width="30%">
 
-    <form method="POST" action="/urls/<%= shortURL %>/delete">
+<% if (!flag) { %>
+
+
+
+<%= user_id %>
+
+  <% for (let shortURL in urls) { %>
+
+
+    <% if (user_id===urls[shortURL].user_id) { %>
+      <form method="POST" action="/urls/<%= shortURL %>/delete">
         <tr>
-        <td> <a href="/urls/<%= shortURL %>"><%= shortURL %></a>  -->  </td>
+          <td>
+            <a href="/urls/<%= shortURL %>"><%= shortURL %></a>
+          </td>
 
-        <td> <%= urls[shortURL] %></td>
+          <td>
+            <%= urls[shortURL].longURL %>
+          </td>
 
+          <td>
+            <button>
+                <a href="/urls/<%= shortURL %>" >Edit</a>
+            </button>
+          </td>
 
-        <td> <button>
-        <a href="/urls/<%= shortURL %>" >Edit</a>
-        </button> </td>
-
-
-        <td> <button type="submit">Delete</button> </td>
+          <td>
+            <button type="submit">Delete</button>
+          </td>
+        </tr>
       </form>
+      <% } %>
     <% } %>
-  </tr>
+
 </table>
+
+
+
   <a href="/urls/new">Create New</a>
+
+<% } %>
+
+
+
+
+
 
 
 </body>

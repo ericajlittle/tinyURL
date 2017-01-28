@@ -2,6 +2,7 @@ const express = require("express");
 const cookieParser = require('cookie-parser')
 const app = express();
 const PORT = process.env.PORT || 8080;
+const bcrypt = require('bcrypt');
 
 
 const bodyParser = require("body-parser");
@@ -11,30 +12,18 @@ app.use(function(req, res, next){
 
   let user = usersDatabase[req.cookies.user_id];
 
-  // user is either going to be a user object, or undefined
-
   res.locals.current_user = user;
+  //find out what next is
   next();
 });
 
 app.set("view engine", "ejs");
 
-const usersDatabase = {
+const usersDatabase = {};
+console.log("this is the database: ", usersDatabase);
+const urlDatabase = {};
+console.log("this is urldatabase: ", urlDatabase);
 
-  // "fhuweife": {
-  //   email: "someone@example.com",
-  //   password: "supersecret",
-  //   id: "fhuweife"
-
-  // }
-
-};
-
-const urlDatabase = {
-
-
-
-};
 function generateRandomString() {
   const random = Math.random().toString(36).substring(0, 6);
   return random;
@@ -62,7 +51,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-// Index
 app.post("/urls", (req, res) => {
   if (!res.locals.current_user) {
     res.sendStatus(401);
@@ -70,15 +58,11 @@ app.post("/urls", (req, res) => {
   }
   const longURL = req.body["longURL"];
   const shortURL = generateRandomString();
-  console.log(longURL);
-  console.log(shortURL);
-  let personalUser = urlDatabase[res.locals.current_user.id]
-  if (!personalUser) {
-    urlDatabase[res.locals.current_user.id] = {};
-    personalUser = urlDatabase[res.locals.current_user.id]
-  };
-  personalUser[shortURL] = longURL;
-  console.log(urlDatabase);
+  urlDatabase[shortURL] = {
+    longURL: longURL,
+    shortURL: shortURL,
+    user_id: res.locals.current_user.id
+  }
   res.redirect(302, "/urls/"+shortURL);
 });
 
@@ -86,35 +70,31 @@ app.post("/urls", (req, res) => {
 function authenticate(email, password) {
   for (let user_id in usersDatabase) {
     let user = usersDatabase[user_id];
-
-    if (email === user.email) {
-      if (password === user.password) {
-        return user_id;
-      } else {
-        // found email but password didn't match
-        return null;
-      }
+// console.log('email: ', email === user.email);
+// console.log('password: ', !bcrypt.compareSync(password, hashed_password));
+    if ((email === user.email) && bcrypt.compareSync(password, user.password)) {
+      return user_id;
     }
   }
-  // didn't find user for that email
   return null;
 }
 app.get("/login", (req, res) => {
   res.render("login");
 })
-// Login user
+
 app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
+  const hashed_password = bcrypt.hashSync(password, 10);
 
   let user_id = authenticate(email, password);
 
   if (user_id) {
     res.cookie("user_id", user_id);
     res.redirect("/");
-  }
-  else {
-    res.send(403);
+  } else {
+    res.status(403);
+    res.send("wrong email or password!");
     res.end();
   }
 });
@@ -123,10 +103,11 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
-// Register user
 app.post("/register", (req, res) => {
   let email = req.body.email;
-  let password = req.body.password;
+  const password = req.body.password;
+  const hashed_password = bcrypt.hashSync(password, 10);
+
   if (!email || !password) {
     res.status(400);
     res.send("no email");
@@ -141,37 +122,34 @@ app.post("/register", (req, res) => {
   const id = generateRandomString()
   usersDatabase[id] = {
     email: req.body.email,
-    password: req.body.password,
+    //changed but might not work
+    password: hashed_password,
     id: id
   }
-  console.log(usersDatabase);
   res.cookie("user_id", id);
   res.redirect("/");
 
 });
 
-// Logout user
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
 app.post("/urls/:shortUrl/delete", (req, res) => {
+  if (!res.locals.current_user) {
+    res.redirect("/login");
+    return;
+  }
   const shortUrl = req.params.shortUrl;
   delete urlDatabase[shortUrl];
   res.redirect('/urls');
 });
 
-// Create new
-app.post("/urls/:shortURL/edit", (req, res) => {
+app.post("/urls/:shortURL/update", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  let personalUser = urlDatabase[res.locals.current_user.id]
-  if (!personalUser) {
-    urlDatabase[res.locals.current_user.id] = {};
-    personalUser = urlDatabase[res.locals.current_user.id]
-  };
-  personalUser[shortURL] = longURL;
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -180,35 +158,42 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let temp = 0;
+  let templateVars;
+  if (!res.locals.current_user) {
+    temp = 1;
+  }
+  if (temp === 1) {
+     templateVars = { urls: urlDatabase, flag:true };
+  } else {
+
+    templateVars = { urls: urlDatabase, flag:false, user_id: res.locals.current_user.id };
+  }
+
   res.render("urls_index", templateVars);
+
 });
 
 app.get("/urls/:shortUrl", (req, res) => {
-  let templateVars = { shortURL: req.params.shortUrl, longURL: urlDatabase[req.params.shortUrl] };
+  let templateVars = {
+    shortURL: req.params.shortUrl,
+    longURL: urlDatabase[req.params.shortUrl].longURL
+  };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  console.log("test")
   for (let id in urlDatabase) {
-    for (let shortURL in urlDatabase[id])
-     { console.log(id, shortURL, req.params.shortURL);
-      if (req.params.shortURL === shortURL) {
-        let longURL = urlDatabase[id][shortURL];
-        res.redirect(longURL);
-        return;
-      }
+    console.log("this is id: ", id);
+    if (id === req.params.shortURL) {
+      let longURL = urlDatabase[id].longURL;
+      res.redirect(longURL);
+      console.log("this is longURL: ", longURL);
     }
   }
 
-
-   res.end("ERROR");
-
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-  res.end();
+  res.redirect(302, "/urls");
 });
 
 app.listen(PORT, () => {
