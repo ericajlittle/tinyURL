@@ -46,28 +46,27 @@ function emailIsTaken(email) {
   return taken;
 };
 
+function loggedInCheck(req, res, next){
+  if (res.locals.current_user) {
+    next();
+  } else {
+    // go away, or I shall taunt you a second time
+    res.status(401).render("please_log_in");
+  }
+}
 
-app.get("/urls", (req, res) => {
+app.get("/urls", loggedInCheck, (req, res) => {
   let temp = 0;
   let templateVars;
-  if (!res.locals.current_user) {
-    temp = 1; }
-  if (temp === 1) {
-    templateVars = { urls: urlDatabase, flag:true };
-  } else {
-    templateVars = { urls: urlDatabase, flag:false, user_id: res.locals.current_user.id };
-  }
-
+  templateVars = { urls: urlDatabase, flag:false, user_id: res.locals.current_user.id };
   res.render("urls_index", templateVars);
-
 });
 
-app.post("/urls", (req, res) => {
-  if (!res.locals.current_user) {
-    res.redirect(401, "/login");
-    // res.send("please login");
-    return;
-  }
+app.post("/urls", loggedInCheck, (req, res) => {
+  // if (!res.locals.current_user) {
+  //   res.status(401).render("please_log_in");
+  //   return;
+  // }
   const longURL = req.body["longURL"];
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -75,15 +74,14 @@ app.post("/urls", (req, res) => {
     shortURL: shortURL,
     user_id: res.locals.current_user.id
   }
-  res.redirect(302, "/urls/"+shortURL);
+  // just changed from /urls
+  res.redirect(302, "/urls");
 });
 
 
 function authenticate(email, password) {
   for (let user_id in usersDatabase) {
     let user = usersDatabase[user_id];
-// console.log('email: ', email === user.email);
-// console.log('password: ', !bcrypt.compareSync(password, hashed_password));
     if ((email === user.email) && bcrypt.compareSync(password, user.password)) {
       return user_id;
     }
@@ -148,48 +146,58 @@ app.post("/register", (req, res) => {
 app.post("/logout", (req, res) => {
   req.session.user_id = "";
   //res.clearCookie('user_id');
-  res.redirect("/");
+  res.redirect("/login");
 });
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
 
-app.get("/urls/new", (req, res) => {
-  if (!res.locals.current_user) {
-    res.redirect(401, "/login");
-    return;
-  }
+app.get("/urls/new", loggedInCheck, (req, res) => {
+
+  // if (!res.locals.current_user) {
+  //   res.redirect(401, "/login");
+  //   return;
+  // }
   res.render("urls_new");
 });
 
 
-app.post("/urls/:shortUrl/delete", (req, res) => {
-  if (!res.locals.current_user) {
-    res.redirect(401, "/login");
-    return;
-  }
+app.post("/urls/:shortUrl/delete", loggedInCheck, (req, res) => {
+  // if (!res.locals.current_user) {
+  //   res.redirect(401, "/login");
+  //   return;
+  // }
   const shortUrl = req.params.shortUrl;
   delete urlDatabase[shortUrl];
   res.redirect('/urls');
 });
 
-app.post("/urls/:shortURL/update", (req, res) => {
+app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
   urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
-app.post("/urls/:shortURL", (req, res) => {
-
-})
 
 
-app.get("/urls/:shortURL", (req, res) => {
+app.get("/urls/:shortURL", loggedInCheck, (req, res) => {
+  // TODO: figure out if we have an error
+
+  // if (urlDatabase.user_id !== res.locals.current_user) {
+  //   res.status(403);
+  //   res.send("Tiny URL does not match user");
+  // }
+  if (urlDatabase.shortURL === undefined) {
+    res.status(404);
+    res.send("Tiny URL does not exist");
+  }
+// TODO figure out how to check if user matches shortURL
+
   let templateVars = {
-    shortURL: req.params.shortUrl,
-    longURL: urlDatabase[req.params.shortUrl].longURL
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL
   };
   res.render("urls_show", templateVars);
 });
