@@ -11,7 +11,7 @@
     <%= shortURL %> - <%= longURL %>
   </p>
 <!-- need to change /update !-->
-  <form method="POST" action="/urls/<%= shortURL %>/update">
+  <form method="POST" action="/urls/<%= shortURL %>">
     <input id="longURL" type="text" name="longURL" placeholder="http://" value="<%= longURL %>" style="width: 300px">
     <button type="submit">Edit</button>
 

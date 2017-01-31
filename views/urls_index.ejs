@@ -7,17 +7,10 @@
   <header>
     <% include ./partials/_header %>
   </header>
-
 <!-- logged in checking condition -->
-
-<% if (!flag) { %>
-
   <table border="1" width="30%">
 
-
-
   <% for (let shortURL in urls) { %>
-
 
     <% if (user_id===urls[shortURL].user_id) { %>
       <form method="POST" action="/urls/<%= shortURL %>/delete">
@@ -32,7 +25,7 @@
 
           <td>
             <button>
-                <a href="/urls/<%= shortURL %>" >Edit</a>
+              <a href="/urls/<%= shortURL %>" >Edit</a>
             </button>
           </td>
 
@@ -46,17 +39,7 @@
 
 </table>
 
-
-
   <a href="/urls/new">Create a New Short Link</a>
-
-<% } %>
-
-
-
-
-
-
 
 </body>
 </html>
